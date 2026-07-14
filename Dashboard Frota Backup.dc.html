@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #0a0d12; }
+    ::-webkit-scrollbar-thumb { background: #232a35; border-radius: 6px; }
+  </style>
+</helmet>
+
+<div style="display:flex; height:100vh; width:100%; background:#0a0d12; color:#e6e9ef; font-family:'Inter',sans-serif; overflow:hidden;">
+
+  <!-- SIDEBAR -->
+  <div style="width:236px; flex-shrink:0; background:#0d1119; border-right:1px solid #1b212b; display:flex; flex-direction:column; padding:20px 14px;">
+    <div style="display:flex; align-items:center; gap:10px; padding:4px 8px 22px 8px;">
+      <div style="width:30px; height:30px; border-radius:7px; background:#16351f; border:1px solid #22c55e; display:flex; align-items:center; justify-content:center;">
+        <div style="width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e;"></div>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:700; letter-spacing:0.2px;">Frota Backup</div>
+        <div style="font-size:11px; color:#5b6472; font-family:'JetBrains Mono',monospace;">Futuratec · NOC</div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:2px; margin-top:6px;">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
+        <div onClick="{{ item.onClick }}" style="display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px; font-weight:{{ item.weight }}; color:{{ item.textColor }}; background:{{ item.bgColor }};" style-hover="background:#161c26;">
+          <div style="width:7px; height:7px; border-radius:2px; background:{{ item.dotColor }}; flex-shrink:0;"></div>
+          {{ item.label }}
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:auto; padding:10px 8px; border-top:1px solid #1b212b;">
+      <div style="font-size:11px; color:#5b6472; font-family:'JetBrains Mono',monospace; line-height:1.6;">
+        modelo pull · HTTPS saída<br/>
+        sem SSH · age + minisign
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1; overflow-y:auto; padding:28px 34px 60px 34px;">
+
+    <!-- ============ FLEET OVERVIEW ============ -->
+    <sc-if value="{{ isFleet }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:22px;">
+          <div>
+            <div style="font-size:21px; font-weight:700;">Visão geral da frota</div>
+            <div style="font-size:13px; color:#8b93a1; margin-top:4px;">{{ fleetSubtitle }}</div>
+          </div>
+          <div style="font-size:12px; color:#5b6472; font-family:'JetBrains Mono',monospace;">{{ nowLabel }}</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:26px;">
+          <sc-for list="{{ fleetStats }}" as="stat" hint-placeholder-count="5">
+            <div style="background:#11151c; border:1px solid #1b212b; border-radius:10px; padding:16px 18px;">
+              <div style="font-size:12px; color:#8b93a1; margin-bottom:8px;">{{ stat.label }}</div>
+              <div style="font-size:26px; font-weight:700; font-family:'JetBrains Mono',monospace; color:{{ stat.color }};">{{ stat.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1.8fr 0.8fr 0.7fr 1.2fr 0.9fr 0.7fr 0.4fr; gap:10px; padding:12px 20px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5b6472; border-bottom:1px solid #1b212b;">
+            <div>Cliente</div><div>Heartbeat</div><div>Último backup</div><div>Uso do HD</div><div>Config</div><div>Versão</div><div></div>
+          </div>
+          <sc-for list="{{ clients }}" as="c" hint-placeholder-count="7">
+            <div onClick="{{ c.onClick }}" style="display:grid; grid-template-columns:1.8fr 0.8fr 0.7fr 1.2fr 0.9fr 0.7fr 0.4fr; gap:10px; align-items:center; padding:14px 20px; border-bottom:1px solid #161b23; cursor:pointer;" style-hover="background:#141922;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:9px; height:9px; border-radius:50%; background:{{ c.statusColor }}; box-shadow:0 0 6px {{ c.statusColor }}; flex-shrink:0;"></div>
+                <div>
+                  <div style="font-size:13.5px; font-weight:600;">{{ c.name }}</div>
+                  <div style="font-size:11px; color:{{ c.statusColor }};">{{ c.statusLabel }}</div>
+                </div>
+              </div>
+              <div style="font-size:12.5px; color:#8b93a1; font-family:'JetBrains Mono',monospace;">{{ c.lastHeartbeat }}</div>
+              <div style="font-size:12.5px; color:{{ c.runStatusColor }}; font-family:'JetBrains Mono',monospace;">{{ c.lastRunLabel }}</div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="flex:1; height:6px; border-radius:3px; background:#1b212b; overflow:hidden;">
+                    <div style="height:100%; width:{{ c.hdUsagePct }}%; background:{{ c.hdBarColor }};"></div>
+                  </div>
+                  <div style="font-size:11.5px; color:#8b93a1; font-family:'JetBrains Mono',monospace; width:30px;">{{ c.hdUsagePct }}%</div>
+                </div>
+              </div>
+              <div>
+                <span style="font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; color:{{ c.configColor }}; background:{{ c.configBg }};">{{ c.configLabel }}</span>
+              </div>
+              <div style="font-size:12px; color:#8b93a1; font-family:'JetBrains Mono',monospace;">{{ c.version }}</div>
+              <div style="font-size:16px; color:#5b6472; text-align:right;">›</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ CLIENT DETAIL ============ -->
+    <sc-if value="{{ isClientView }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div onClick="{{ goFleet }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:#8b93a1; cursor:pointer; margin-bottom:16px;" style-hover="color:#e6e9ef;">
+          ← Frota
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:14px; height:14px; border-radius:50%; background:{{ selected.statusColor }}; box-shadow:0 0 10px {{ selected.statusColor }};"></div>
+            <div>
+              <div style="font-size:22px; font-weight:700;">{{ selected.name }}</div>
+              <div style="font-size:12.5px; color:{{ selected.statusColor }}; margin-top:2px;">{{ selected.statusLabel }}</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div style="font-size:12px; padding:8px 14px; border-radius:8px; background:#161c26; border:1px solid #232a35; cursor:pointer;" style-hover="border-color:#22c55e;">Rodar agora</div>
+            <div style="font-size:12px; padding:8px 14px; border-radius:8px; background:#161c26; border:1px solid #232a35; cursor:pointer;" style-hover="border-color:#22c55e;">--check</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;">
+          <div style="background:#11151c; border:1px solid #1b212b; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11.5px; color:#8b93a1; margin-bottom:6px;">Heartbeat</div>
+            <div style="font-size:16px; font-weight:600; font-family:'JetBrains Mono',monospace;">{{ selected.lastHeartbeat }}</div>
+          </div>
+          <div style="background:#11151c; border:1px solid #1b212b; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11.5px; color:#8b93a1; margin-bottom:6px;">Uso do HD</div>
+            <div style="font-size:16px; font-weight:600; font-family:'JetBrains Mono',monospace; color:{{ selected.hdBarColor }};">{{ selected.hdUsagePct }}%</div>
+          </div>
+          <div style="background:#11151c; border:1px solid #1b212b; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11.5px; color:#8b93a1; margin-bottom:6px;">Versão bkp.py</div>
+            <div style="font-size:16px; font-weight:600; font-family:'JetBrains Mono',monospace;">{{ selected.version }}</div>
+          </div>
+          <div style="background:#11151c; border:1px solid #1b212b; border-radius:10px; padding:14px 16px;">
+            <div style="font-size:11.5px; color:#8b93a1; margin-bottom:6px;">Config</div>
+            <div style="font-size:14px; font-weight:600; color:{{ selected.configColor }};">{{ selected.configLabel }}</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.1fr 0.9fr; gap:16px; margin-bottom:22px;">
+          <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; padding:18px 20px;">
+            <div style="font-size:13.5px; font-weight:700; margin-bottom:14px;">Configuração</div>
+
+            <div style="font-size:11px; text-transform:uppercase; color:#5b6472; margin-bottom:6px;">Destino</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#c3cad6; background:#0d1119; border:1px solid #1b212b; border-radius:8px; padding:10px 12px; margin-bottom:16px;">
+              tipo: {{ selected.destino.tipo }} · rotulo: {{ selected.destino.rotulo }}<br/>
+              montar_em: {{ selected.destino.montar_em }} · dias_rotacao: {{ selected.destino.dias_rotacao }}
+            </div>
+
+            <div style="font-size:11px; text-transform:uppercase; color:#5b6472; margin-bottom:6px;">Montagens</div>
+            <sc-for list="{{ selected.montagens }}" as="m" hint-placeholder-count="2">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#8b93a1; padding:7px 0; border-bottom:1px solid #161b23;">
+                <span style="color:#e6e9ef;">{{ m.tipo }}</span> · {{ m.origem }} → {{ m.ponto }}
+              </div>
+            </sc-for>
+
+            <div style="font-size:11px; text-transform:uppercase; color:#5b6472; margin:14px 0 6px 0;">Cópias</div>
+            <sc-for list="{{ selected.copias }}" as="cp" hint-placeholder-count="2">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#8b93a1; padding:7px 0; border-bottom:1px solid #161b23;">
+                <span style="color:#e6e9ef;">{{ cp.nome }}</span> · {{ cp.metodo }} · {{ cp.origem }}
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; padding:18px 20px;">
+            <div style="font-size:13.5px; font-weight:700; margin-bottom:14px;">Últimas execuções</div>
+            <div style="display:flex; align-items:flex-end; gap:6px; height:70px; margin-bottom:6px;">
+              <sc-for list="{{ selected.sparkline }}" as="s" hint-placeholder-count="7">
+                <div style="flex:1; height:{{ s.height }}%; background:{{ s.color }}; border-radius:3px 3px 0 0; min-height:6px;"></div>
+              </sc-for>
+            </div>
+            <div style="font-size:11px; color:#5b6472; text-align:center;">últimas 7 rodadas</div>
+          </div>
+        </div>
+
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1fr 0.7fr 1fr 0.8fr 0.8fr; gap:10px; padding:12px 20px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5b6472; border-bottom:1px solid #1b212b;">
+            <div>Data</div><div>Status</div><div>Jobs</div><div>Duração</div><div>Versão aplicada</div>
+          </div>
+          <sc-for list="{{ selectedRuns }}" as="r" hint-placeholder-count="5">
+            <div style="display:grid; grid-template-columns:1fr 0.7fr 1fr 0.8fr 0.8fr; gap:10px; padding:11px 20px; border-bottom:1px solid #161b23; font-size:12.5px; font-family:'JetBrains Mono',monospace;">
+              <div style="color:#c3cad6;">{{ r.data }}</div>
+              <div style="color:{{ r.statusColor }};">{{ r.statusLabel }}</div>
+              <div style="color:#8b93a1;">{{ r.jobsLabel }}</div>
+              <div style="color:#8b93a1;">{{ r.duracao }}</div>
+              <div style="color:#8b93a1;">{{ r.versao }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ RUNS ============ -->
+    <sc-if value="{{ isRuns }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:21px; font-weight:700; margin-bottom:6px;">Execuções</div>
+        <div style="font-size:13px; color:#8b93a1; margin-bottom:18px;">Histórico consolidado de todos os clientes</div>
+
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <sc-for list="{{ runFilters }}" as="f" hint-placeholder-count="4">
+            <div onClick="{{ f.onClick }}" style="font-size:12px; padding:7px 14px; border-radius:20px; cursor:pointer; font-weight:600; color:{{ f.textColor }}; background:{{ f.bgColor }}; border:1px solid {{ f.borderColor }};">{{ f.label }}</div>
+          </sc-for>
+        </div>
+
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1.2fr 1fr 0.8fr 1fr 0.8fr 0.8fr; gap:10px; padding:12px 20px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5b6472; border-bottom:1px solid #1b212b;">
+            <div>Cliente</div><div>Data</div><div>Status</div><div>Jobs</div><div>Duração</div><div>Versão</div>
+          </div>
+          <sc-for list="{{ filteredRuns }}" as="r" hint-placeholder-count="10">
+            <div style="display:grid; grid-template-columns:1.2fr 1fr 0.8fr 1fr 0.8fr 0.8fr; gap:10px; padding:11px 20px; border-bottom:1px solid #161b23; font-size:12.5px; font-family:'JetBrains Mono',monospace;">
+              <div style="color:#e6e9ef; font-family:'Inter',sans-serif; font-weight:600;">{{ r.clienteName }}</div>
+              <div style="color:#c3cad6;">{{ r.data }}</div>
+              <div style="color:{{ r.statusColor }};">{{ r.statusLabel }}</div>
+              <div style="color:#8b93a1;">{{ r.jobsLabel }}</div>
+              <div style="color:#8b93a1;">{{ r.duracao }}</div>
+              <div style="color:#8b93a1;">{{ r.versao }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ COMMANDS ============ -->
+    <sc-if value="{{ isCommands }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:21px; font-weight:700; margin-bottom:6px;">Comandos on-demand</div>
+        <div style="font-size:13px; color:#8b93a1; margin-bottom:18px;">Fila de comandos entregue no próximo heartbeat de cada cliente</div>
+
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; padding:16px 20px; margin-bottom:20px;">
+          <div style="font-size:12.5px; font-weight:600; margin-bottom:12px;">Novo comando</div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <select value="{{ formCliente }}" onChange="{{ onFormClienteChange }}" style="background:#0d1119; color:#e6e9ef; border:1px solid #232a35; border-radius:8px; padding:9px 12px; font-size:12.5px; font-family:'Inter',sans-serif;">
+              <sc-for list="{{ clients }}" as="c" hint-placeholder-count="7">
+                <option value="{{ c.id }}">{{ c.name }}</option>
+              </sc-for>
+            </select>
+            <select value="{{ formTipo }}" onChange="{{ onFormTipoChange }}" style="background:#0d1119; color:#e6e9ef; border:1px solid #232a35; border-radius:8px; padding:9px 12px; font-size:12.5px; font-family:'Inter',sans-serif;">
+              <option value="rodar agora">rodar agora</option>
+              <option value="--check">--check</option>
+              <option value="atualizar">atualizar</option>
+            </select>
+            <div onClick="{{ addCommand }}" style="font-size:12.5px; font-weight:600; padding:9px 16px; border-radius:8px; background:#16351f; border:1px solid #22c55e; color:#22c55e; cursor:pointer;" style-hover="background:#1a4025;">Enfileirar</div>
+          </div>
+        </div>
+
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr 0.6fr; gap:10px; padding:12px 20px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5b6472; border-bottom:1px solid #1b212b;">
+            <div>Cliente</div><div>Tipo</div><div>Status</div><div>Criado em</div><div></div>
+          </div>
+          <sc-for list="{{ commands }}" as="cmd" hint-placeholder-count="3">
+            <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr 0.6fr; gap:10px; align-items:center; padding:11px 20px; border-bottom:1px solid #161b23; font-size:12.5px;">
+              <div style="font-weight:600;">{{ cmd.clienteName }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; color:#8b93a1;">{{ cmd.tipo }}</div>
+              <div style="color:{{ cmd.statusColor }};">{{ cmd.statusLabel }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; color:#5b6472;">{{ cmd.criadoEm }}</div>
+              <sc-if value="{{ cmd.canCancel }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ cmd.onCancel }}" style="font-size:11.5px; color:#8b93a1; cursor:pointer; text-align:right;" style-hover="color:#ef4444;">cancelar</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ UPDATES ============ -->
+    <sc-if value="{{ isUpdates }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-size:21px; font-weight:700; margin-bottom:6px;">Atualizações do bkp.py</div>
+        <div style="font-size:13px; color:#8b93a1; margin-bottom:18px;">Assinatura minisign verificada antes de aplicar · rollout por grupo (canary → geral)</div>
+
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; overflow:hidden; margin-bottom:24px;">
+          <div style="display:grid; grid-template-columns:0.7fr 1fr 0.8fr 0.8fr 1fr; gap:10px; padding:12px 20px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5b6472; border-bottom:1px solid #1b212b;">
+            <div>Versão</div><div>Assinatura</div><div>Grupo</div><div>Clientes</div><div>Status</div>
+          </div>
+          <sc-for list="{{ versions }}" as="v" hint-placeholder-count="3">
+            <div style="display:grid; grid-template-columns:0.7fr 1fr 0.8fr 0.8fr 1fr; gap:10px; align-items:center; padding:13px 20px; border-bottom:1px solid #161b23; font-size:12.5px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-weight:700;">{{ v.versao }}</div>
+              <div style="color:#22c55e; font-family:'JetBrains Mono',monospace; font-size:12px;">✓ minisign ok</div>
+              <div style="color:#8b93a1;">{{ v.grupo }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; color:#8b93a1;">{{ v.clientesCount }}</div>
+              <div style="color:{{ v.statusColor }}; font-weight:600;">{{ v.status }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:13.5px; font-weight:700; margin-bottom:12px;">Versão aplicada por cliente</div>
+        <div style="background:#11151c; border:1px solid #1b212b; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1.4fr 0.8fr 0.8fr 1fr; gap:10px; padding:12px 20px; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#5b6472; border-bottom:1px solid #1b212b;">
+            <div>Cliente</div><div>Aplicada</div><div>Alvo</div><div>Situação</div>
+          </div>
+          <sc-for list="{{ clients }}" as="c" hint-placeholder-count="7">
+            <div style="display:grid; grid-template-columns:1.4fr 0.8fr 0.8fr 1fr; gap:10px; align-items:center; padding:11px 20px; border-bottom:1px solid #161b23; font-size:12.5px;">
+              <div style="font-weight:600;">{{ c.name }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; color:#8b93a1;">{{ c.version }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; color:#8b93a1;">{{ c.targetVersion }}</div>
+              <div style="color:{{ c.updateSituationColor }};">{{ c.updateSituation }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+function statusMeta(s) {
+  switch (s) {
+    case 'ok': return { color: '#22c55e', label: 'Operacional', bg: 'rgba(34,197,94,0.14)' };
+    case 'warning': return { color: '#f59e0b', label: 'Atenção', bg: 'rgba(245,158,11,0.14)' };
+    case 'error': return { color: '#ef4444', label: 'Erro', bg: 'rgba(239,68,68,0.14)' };
+    case 'offline': return { color: '#5b6472', label: 'Offline', bg: 'rgba(91,100,114,0.14)' };
+    default: return { color: '#5b6472', label: s, bg: 'rgba(91,100,114,0.14)' };
+  }
+}
+
+var CLIENTS_DATA = [
+  {
+    id: 'seifo', name: 'Seifo', status: 'ok', lastHeartbeat: '2 min atrás', hdUsagePct: 68,
+    version: '1.0.2', targetVersion: '1.0.2', pendingConfig: false,
+    lastRun: { data: '04/07 03:12', status: 'ok' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-01', montar_em: '/mnt/hd_bkp', dias_rotacao: 7 },
+    montagens: [
+      { tipo: 'smb', origem: '//192.168.26.253/Seifo', ponto: '/mnt/Seifo' },
+      { tipo: 'smb', origem: '//192.168.26.252/Backup', ponto: '/mnt/Backup' },
+    ],
+    copias: [
+      { nome: 'Setores', metodo: 'rsync', origem: '/mnt/Seifo' },
+      { nome: 'Banco', metodo: 'rsync', origem: '/mnt/Backup' },
+    ],
+    runHistory: ['ok', 'ok', 'ok', 'warning', 'ok', 'ok', 'ok'],
+  },
+  {
+    id: 'aurora', name: 'Aurora Alimentos', status: 'warning', lastHeartbeat: '5 min atrás', hdUsagePct: 92,
+    version: '1.0.2', targetVersion: '1.0.2', pendingConfig: false,
+    lastRun: { data: '03/07 22:40', status: 'warning' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-02', montar_em: '/mnt/hd_bkp', dias_rotacao: 7 },
+    montagens: [{ tipo: 'smb', origem: '//10.0.4.10/Producao', ponto: '/mnt/Producao' }],
+    copias: [{ nome: 'Producao', metodo: 'rsync', origem: '/mnt/Producao' }],
+    runHistory: ['ok', 'ok', 'warning', 'warning', 'ok', 'warning', 'warning'],
+  },
+  {
+    id: 'bemfeita', name: 'Construtora Bemfeita', status: 'error', lastHeartbeat: '3 min atrás', hdUsagePct: 41,
+    version: '1.0.1', targetVersion: '1.0.2', pendingConfig: true,
+    lastRun: { data: '04/07 02:05', status: 'error' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-01', montar_em: '/mnt/hd_bkp', dias_rotacao: 7 },
+    montagens: [{ tipo: 'smb', origem: '//10.0.2.5/Obras', ponto: '/mnt/Obras' }],
+    copias: [{ nome: 'Obras', metodo: 'rsync', origem: '/mnt/Obras' }],
+    runHistory: ['ok', 'ok', 'ok', 'error', 'error', 'error', 'error'],
+  },
+  {
+    id: 'vitale', name: 'Vitale Distribuidora', status: 'offline', lastHeartbeat: '6 h atrás', hdUsagePct: 55,
+    version: '1.0.1', targetVersion: '1.0.2', pendingConfig: false,
+    lastRun: { data: '03/07 03:00', status: 'ok' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-03', montar_em: '/mnt/hd_bkp', dias_rotacao: 3 },
+    montagens: [{ tipo: 'nfs', origem: '10.0.9.2:/volume1/dados', ponto: '/mnt/dados_nfs' }],
+    copias: [{ nome: 'Dados', metodo: 'rsync', origem: '/mnt/dados_nfs' }],
+    runHistory: ['ok', 'ok', 'ok', 'ok', 'offline', 'offline', 'offline'],
+  },
+  {
+    id: 'nortec', name: 'Grupo Nortec', status: 'ok', lastHeartbeat: '1 min atrás', hdUsagePct: 34,
+    version: '1.0.2', targetVersion: '1.0.2', pendingConfig: true,
+    lastRun: { data: '04/07 03:20', status: 'ok' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-01', montar_em: '/mnt/hd_bkp', dias_rotacao: 7 },
+    montagens: [{ tipo: 'smb', origem: '//10.0.6.4/Financeiro', ponto: '/mnt/Financeiro' }],
+    copias: [{ nome: 'Financeiro', metodo: 'rsync', origem: '/mnt/Financeiro' }],
+    runHistory: ['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok'],
+  },
+  {
+    id: 'malbec', name: 'Studio Malbec', status: 'ok', lastHeartbeat: '4 min atrás', hdUsagePct: 20,
+    version: '1.0.3', targetVersion: '1.0.3', pendingConfig: false,
+    lastRun: { data: '04/07 03:05', status: 'ok' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-01', montar_em: '/mnt/hd_bkp', dias_rotacao: 7 },
+    montagens: [{ tipo: 'smb', origem: '//10.0.8.9/Estudio', ponto: '/mnt/Estudio' }],
+    copias: [{ nome: 'Estudio', metodo: 'rsync', origem: '/mnt/Estudio' }],
+    runHistory: ['ok', 'ok', 'ok', 'ok', 'ok', 'ok', 'ok'],
+  },
+  {
+    id: 'farmaciasul', name: 'Farmácia Popular Sul', status: 'ok', lastHeartbeat: '7 min atrás', hdUsagePct: 77,
+    version: '1.0.2', targetVersion: '1.0.2', pendingConfig: false,
+    lastRun: { data: '04/07 02:50', status: 'ok' },
+    destino: { tipo: 'hd', rotulo: 'HDEXTBKP-02', montar_em: '/mnt/hd_bkp', dias_rotacao: 7 },
+    montagens: [{ tipo: 'smb', origem: '//10.0.1.11/Vendas', ponto: '/mnt/Vendas' }],
+    copias: [{ nome: 'Vendas', metodo: 'rsync', origem: '/mnt/Vendas' }],
+    runHistory: ['ok', 'ok', 'ok', 'ok', 'ok', 'warning', 'ok'],
+  },
+];
+
+var RUNS_DATA = [
+  { cliente: 'seifo', data: '04/07 03:12', status: 'ok', jobsOk: 2, jobsTotal: 2, duracao: '18min', versao: '1.0.2' },
+  { cliente: 'seifo', data: '03/07 03:10', status: 'ok', jobsOk: 2, jobsTotal: 2, duracao: '17min', versao: '1.0.2' },
+  { cliente: 'seifo', data: '02/07 03:14', status: 'warning', jobsOk: 1, jobsTotal: 2, duracao: '22min', versao: '1.0.2' },
+  { cliente: 'aurora', data: '03/07 22:40', status: 'warning', jobsOk: 1, jobsTotal: 1, duracao: '41min', versao: '1.0.2' },
+  { cliente: 'aurora', data: '02/07 22:38', status: 'warning', jobsOk: 1, jobsTotal: 1, duracao: '39min', versao: '1.0.2' },
+  { cliente: 'aurora', data: '01/07 22:30', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '35min', versao: '1.0.2' },
+  { cliente: 'bemfeita', data: '04/07 02:05', status: 'error', jobsOk: 0, jobsTotal: 1, duracao: '2min', versao: '1.0.1' },
+  { cliente: 'bemfeita', data: '03/07 02:00', status: 'error', jobsOk: 0, jobsTotal: 1, duracao: '2min', versao: '1.0.1' },
+  { cliente: 'bemfeita', data: '02/07 02:03', status: 'error', jobsOk: 0, jobsTotal: 1, duracao: '3min', versao: '1.0.1' },
+  { cliente: 'bemfeita', data: '01/07 02:01', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '26min', versao: '1.0.1' },
+  { cliente: 'vitale', data: '03/07 03:00', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '29min', versao: '1.0.1' },
+  { cliente: 'vitale', data: '02/07 03:02', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '28min', versao: '1.0.1' },
+  { cliente: 'nortec', data: '04/07 03:20', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '14min', versao: '1.0.2' },
+  { cliente: 'nortec', data: '03/07 03:18', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '13min', versao: '1.0.2' },
+  { cliente: 'malbec', data: '04/07 03:05', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '9min', versao: '1.0.3' },
+  { cliente: 'malbec', data: '03/07 03:04', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '9min', versao: '1.0.3' },
+  { cliente: 'farmaciasul', data: '04/07 02:50', status: 'ok', jobsOk: 1, jobsTotal: 1, duracao: '31min', versao: '1.0.2' },
+  { cliente: 'farmaciasul', data: '03/07 02:48', status: 'warning', jobsOk: 1, jobsTotal: 1, duracao: '33min', versao: '1.0.2' },
+];
+
+var VERSIONS_DATA = [
+  { versao: '1.0.3', grupo: 'canary', clientesCount: 1, status: 'em teste (canary)', statusColor: '#f59e0b' },
+  { versao: '1.0.2', grupo: 'geral', clientesCount: 4, status: 'estável', statusColor: '#22c55e' },
+  { versao: '1.0.1', grupo: 'geral', clientesCount: 2, status: 'descontinuando', statusColor: '#5b6472' },
+];
+
+var CLIENT_MAP = {};
+CLIENTS_DATA.forEach(function (c) { CLIENT_MAP[c.id] = c; });
+
+var NAV_DEFS = [
+  { id: 'fleet', label: 'Frota' },
+  { id: 'runs', label: 'Execuções' },
+  { id: 'commands', label: 'Comandos' },
+  { id: 'updates', label: 'Atualizações' },
+];
+
+class Component extends DCLogic {
+  state = {
+    view: 'fleet',
+    selectedClient: 'seifo',
+    runFilter: 'all',
+    formCliente: 'seifo',
+    formTipo: 'rodar agora',
+    commands: [
+      { id: 1, cliente: 'bemfeita', tipo: 'rodar agora', status: 'pendente', criadoEm: '04/07 08:10' },
+      { id: 2, cliente: 'nortec', tipo: '--check', status: 'pendente', criadoEm: '04/07 07:55' },
+      { id: 3, cliente: 'seifo', tipo: '--check', status: 'concluído', criadoEm: '03/07 21:00' },
+    ],
+  };
+
+  setView(v, clientId) {
+    this.setState(function () {
+      var next = { view: v };
+      if (clientId) next.selectedClient = clientId;
+      return next;
+    });
+  }
+
+  addCommand() {
+    var self = this;
+    this.setState(function (s) {
+      var cliente = CLIENT_MAP[s.formCliente];
+      var newCmd = {
+        id: Date.now(),
+        cliente: s.formCliente,
+        tipo: s.formTipo,
+        status: 'pendente',
+        criadoEm: 'agora',
+      };
+      return { commands: [newCmd].concat(s.commands) };
+    });
+  }
+
+  cancelCommand(id) {
+    this.setState(function (s) {
+      return { commands: s.commands.filter(function (c) { return c.id !== id; }) };
+    });
+  }
+
+  renderVals() {
+    var self = this;
+    var state = this.state;
+
+    var navItems = NAV_DEFS.map(function (n) {
+      var active = state.view === n.id || (n.id === 'fleet' && state.view === 'client');
+      return {
+        key: n.id,
+        label: n.label,
+        onClick: function () { self.setView(n.id); },
+        weight: active ? 700 : 500,
+        textColor: active ? '#e6e9ef' : '#8b93a1',
+        bgColor: active ? '#161c26' : 'transparent',
+        dotColor: active ? '#22c55e' : '#2b323d',
+      };
+    });
+
+    function decorateClient(c) {
+      var sm = statusMeta(c.status);
+      var rm = statusMeta(c.lastRun.status);
+      var hdColor = c.hdUsagePct >= 85 ? '#ef4444' : (c.hdUsagePct >= 65 ? '#f59e0b' : '#22c55e');
+      return Object.assign({}, c, {
+        statusColor: sm.color,
+        statusLabel: sm.label,
+        runStatusColor: rm.color,
+        lastRunLabel: c.lastRun.data,
+        hdBarColor: hdColor,
+        configLabel: c.pendingConfig ? 'Pendente' : 'Aplicada',
+        configColor: c.pendingConfig ? '#f59e0b' : '#22c55e',
+        configBg: c.pendingConfig ? 'rgba(245,158,11,0.14)' : 'rgba(34,197,94,0.14)',
+        onClick: function () { self.setView('client', c.id); },
+        targetVersion: c.targetVersion,
+        updateSituation: c.version === c.targetVersion ? 'Em dia' : 'Aguardando pull',
+        updateSituationColor: c.version === c.targetVersion ? '#22c55e' : '#f59e0b',
+      });
+    }
+
+    var clients = CLIENTS_DATA.map(decorateClient);
+
+    var okCount = CLIENTS_DATA.filter(function (c) { return c.status === 'ok'; }).length;
+    var warnCount = CLIENTS_DATA.filter(function (c) { return c.status === 'warning'; }).length;
+    var errCount = CLIENTS_DATA.filter(function (c) { return c.status === 'error'; }).length;
+    var offCount = CLIENTS_DATA.filter(function (c) { return c.status === 'offline'; }).length;
+
+    var fleetStats = [
+      { label: 'Total de clientes', value: String(CLIENTS_DATA.length), color: '#e6e9ef' },
+      { label: 'Operacional', value: String(okCount), color: '#22c55e' },
+      { label: 'Atenção', value: String(warnCount), color: '#f59e0b' },
+      { label: 'Erro', value: String(errCount), color: '#ef4444' },
+      { label: 'Offline', value: String(offCount), color: '#5b6472' },
+    ];
+
+    var selectedRaw = CLIENT_MAP[state.selectedClient] || CLIENTS_DATA[0];
+    var selected = decorateClient(selectedRaw);
+    selected.sparkline = selectedRaw.runHistory.map(function (s) {
+      var m = statusMeta(s);
+      var heightMap = { ok: 90, warning: 55, error: 30, offline: 15 };
+      return { color: m.color, height: heightMap[s] || 40 };
+    });
+
+    function decorateRun(r) {
+      var m = statusMeta(r.status);
+      var cliente = CLIENT_MAP[r.cliente];
+      return Object.assign({}, r, {
+        statusColor: m.color,
+        statusLabel: m.label,
+        jobsLabel: r.jobsOk + '/' + r.jobsTotal,
+        clienteName: cliente ? cliente.name : r.cliente,
+      });
+    }
+
+    var allRuns = RUNS_DATA.map(decorateRun);
+    var selectedRuns = allRuns.filter(function (r) { return r.cliente === state.selectedClient; });
+
+    var runFilterDefs = [
+      { id: 'all', label: 'Todos' },
+      { id: 'ok', label: 'OK' },
+      { id: 'warning', label: 'Atenção' },
+      { id: 'error', label: 'Erro' },
+    ];
+    var runFilters = runFilterDefs.map(function (f) {
+      var active = state.runFilter === f.id;
+      return {
+        label: f.label,
+        onClick: function () { self.setState({ runFilter: f.id }); },
+        textColor: active ? '#0a0d12' : '#8b93a1',
+        bgColor: active ? '#22c55e' : 'transparent',
+        borderColor: active ? '#22c55e' : '#232a35',
+      };
+    });
+    var filteredRuns = state.runFilter === 'all' ? allRuns : allRuns.filter(function (r) { return r.status === state.runFilter; });
+
+    var commands = state.commands.map(function (cmd) {
+      var cliente = CLIENT_MAP[cmd.cliente];
+      var sm = cmd.status === 'pendente' ? { color: '#f59e0b' } : { color: '#5b6472' };
+      return {
+        clienteName: cliente ? cliente.name : cmd.cliente,
+        tipo: cmd.tipo,
+        statusLabel: cmd.status,
+        statusColor: sm.color,
+        criadoEm: cmd.criadoEm,
+        canCancel: cmd.status === 'pendente',
+        onCancel: function () { self.cancelCommand(cmd.id); },
+      };
+    });
+
+    var versions = VERSIONS_DATA;
+
+    return {
+      navItems: navItems,
+      isFleet: state.view === 'fleet',
+      isClientView: state.view === 'client',
+      isRuns: state.view === 'runs',
+      isCommands: state.view === 'commands',
+      isUpdates: state.view === 'updates',
+      fleetSubtitle: CLIENTS_DATA.length + ' clientes monitorados · modelo pull, heartbeat a cada 5–15 min',
+      nowLabel: '04/07/2026 · 08:32',
+      fleetStats: fleetStats,
+      clients: clients,
+      selected: selected,
+      selectedRuns: selectedRuns,
+      goFleet: function () { self.setView('fleet'); },
+      runFilters: runFilters,
+      filteredRuns: filteredRuns,
+      formCliente: state.formCliente,
+      formTipo: state.formTipo,
+      onFormClienteChange: function (e) { self.setState({ formCliente: e.target.value }); },
+      onFormTipoChange: function (e) { self.setState({ formTipo: e.target.value }); },
+      addCommand: function () { self.addCommand(); },
+      commands: commands,
+      versions: versions,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

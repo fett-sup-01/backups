@@ -1,0 +1,16 @@
+# Exemplo de rclone.conf. Copie para rclone.conf e configure seu destino offsite.
+# Gere com `rclone config` numa maquina qualquer e cole o bloco do remote aqui.
+# NAO comite o rclone.conf real (tem credenciais).
+
+# Exemplo Backblaze B2:
+# [b2]
+# type = b2
+# account = <keyID>
+# key = <applicationKey>
+
+# Exemplo SFTP para outro servidor:
+# [offsite]
+# type = sftp
+# host = backup.exemplo.com
+# user = frota
+# key_file = /root/.config/rclone/id_ed25519

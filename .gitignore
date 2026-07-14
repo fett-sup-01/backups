@@ -1,0 +1,45 @@
+# ===== Segredos (NUNCA comitar) =====
+.env
+.env.*
+!.env.example
+!.env.prod.example
+*.key                     # chaves age/minisign privadas, recovery.key, backup.key
+recovery.key
+backup.key
+*.pem
+**/rclone.conf            # credenciais do offsite (backup do backend)
+
+# Configs de cliente com senhas (o modelo .jsonc fica; os reais nao)
+seifo.json
+*.cliente.json
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Node / frontend =====
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-error.log*
+
+# ===== Docker / dados locais =====
+pgdata/
+*.dump
+*.sql.gz
+
+# ===== SO / editor =====
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

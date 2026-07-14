@@ -1,0 +1,58 @@
+# Stack do backend central (doc secao 13). Em producao o nginx (TLS/Let's Encrypt)
+# fica na frente: serve o build do React em / e faz proxy de /api -> api:8000.
+# Aqui, no dev, expomos a API direto em 8010 (8000/8001/8080/8081 estao ocupados
+# no host por outra stack).
+#
+# name FIXO: o basename do diretorio ("backend") colide com o projeto Compose de
+# /Projetos/Tickets/backend. Fixamos o nome do projeto para isolar containers e
+# volumes desta stack (backup-fleet_*), independente do nome da pasta.
+name: backup-fleet
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: backup
+      POSTGRES_PASSWORD: backup
+      POSTGRES_DB: backup
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "55432:5432"   # host 5432 ocupado -> mapeia em 55432 (util p/ psql/pg_dump)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backup"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8010:8000"
+
+  # Dashboard React servido por nginx, com proxy /api -> api:8000 (doc 13).
+  # Em producao, o TLS (Let's Encrypt) fica na frente deste nginx.
+  web:
+    build: ../frontend
+    depends_on:
+      - api
+    ports:
+      - "8020:80"
+    # serve o instalador e os arquivos do agente (curl | bash, doc 11)
+    volumes:
+      - ../deploy/install.sh:/usr/share/nginx/html/install.sh:ro
+      - ../agente.py:/usr/share/nginx/html/agent/agente.py:ro
+      - ../backup.py:/usr/share/nginx/html/agent/backup.py:ro
+      - ../deploy/minisign.pub:/usr/share/nginx/html/agent/minisign.pub:ro
+      - ../deploy/systemd:/usr/share/nginx/html/agent/systemd:ro
+      # Windows (curl|iex, PowerShell)
+      - ../deploy/windows/install.ps1:/usr/share/nginx/html/install.ps1:ro
+      - ../deploy/windows/agente.ps1:/usr/share/nginx/html/agent/agente.ps1:ro
+      - ../deploy/windows/backup.ps1:/usr/share/nginx/html/agent/backup.ps1:ro
+
+volumes:
+  pgdata:

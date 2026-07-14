@@ -1,0 +1,58 @@
+# PRODUCAO SIMPLES (acesso por http://IP-DO-SERVIDOR:8080).
+#
+# Sobe tudo (banco + API + painel) com um comando:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Todas as configuracoes/segredos vem do arquivo .env.prod (env_file). O painel
+# (nginx) serve o React e faz proxy de /api -> API. O Postgres e a API NAO ficam
+# expostos no host: so o painel (porta 8080).
+#
+# Para TLS/dominio (Let's Encrypt), use docker-compose.prod.tls.yml.
+name: backups
+
+services:
+  db:
+    image: postgres:16
+    env_file: .env.prod          # POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      # aspas + $$ = avaliado dentro do container (onde o env_file injeta as vars)
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # sem `ports`: banco nao exposto no host
+
+  api:
+    build: .
+    env_file: .env.prod          # APP_ENV=prod, JWT_SECRET forte, RECOVERY_AGE_PUBKEY, etc.
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    # sem `ports`: so o nginx (rede interna) alcanca a API. Migra o schema
+    # sozinho na subida (entrypoint: alembic upgrade head).
+
+  web:
+    build: ../frontend
+    depends_on:
+      - api
+    ports:
+      - "8080:80"                # acesse o painel em http://IP-DO-SERVIDOR:8080
+    restart: unless-stopped
+    volumes:
+      # instalador + arquivos do agente servidos pelo painel (curl | bash, doc 11)
+      - ../deploy/install.sh:/usr/share/nginx/html/install.sh:ro
+      - ../agente.py:/usr/share/nginx/html/agent/agente.py:ro
+      - ../backup.py:/usr/share/nginx/html/agent/backup.py:ro
+      - ../deploy/minisign.pub:/usr/share/nginx/html/agent/minisign.pub:ro
+      - ../deploy/systemd:/usr/share/nginx/html/agent/systemd:ro
+      # Windows (curl|iex, PowerShell)
+      - ../deploy/windows/install.ps1:/usr/share/nginx/html/install.ps1:ro
+      - ../deploy/windows/agente.ps1:/usr/share/nginx/html/agent/agente.ps1:ro
+      - ../deploy/windows/backup.ps1:/usr/share/nginx/html/agent/backup.ps1:ro
+
+volumes:
+  pgdata:

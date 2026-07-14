@@ -1,0 +1,146 @@
+{
+  // ##########################################################################
+  //  MODELO DE REFERENCIA - todas as opcoes e vertentes implantadas
+  //  ---------------------------------------------------------------------
+  //  Este arquivo e um CATALOGO para consulta (extensao .jsonc para nao ser
+  //  pego pela deteccao automatica de *.json). Copie so os blocos que precisar
+  //  para o .json de cada cliente.
+  //  Regras: aceita comentarios // e /* */. NAO pode ter virgula sobrando no
+  //  fim de uma lista/bloco. Guarde os .json com  chmod 600  (tem senhas).
+  // ##########################################################################
+
+  "cliente": "modelo",                          // nome curto do cliente (usado em log e no e-mail)
+  "email": "relatoriobkp@futuratec.com.br",     // destino do relatorio ("" = nao envia e-mail)
+
+  // ==== BACKEND (fase 2 - envio central; dormente enquanto "url" estiver vazio) ====
+  "backend": {
+    "url": "",                  // "" = roda local, nao envia nada. Ex.: "https://api.suaempresa.com/bkp"
+    "token": "",                // Bearer p/ autenticar (use sempre https:// quando for producao)
+    "timeout_cmd": 0,           // seg. p/ abortar CADA comando externo. 0 = sem limite.
+                                //   ATENCAO: precisa ser maior que o rsync mais demorado do cliente
+                                //   (um 1o backup cheio pode levar horas). Deixe 0 se tiver duvida.
+    "reenvio_segundos": 300,    // insiste no envio ao backend por ate X seg antes de guardar em disco
+    "reenvio_intervalo": 30,    // espera entre tentativas de envio
+    "log_completo": true        // manda no payload o log comando-a-comando (senha ja mascarada)
+  },
+
+  // ==== DESTINO ============================================================
+  //  Escolha UMA forma de identificar o(s) HD(s): "rotulo" (1 HD) OU "hds"[]
+  //  (lista) OU "padrao_rotulo" (acha sozinho). Abaixo esta a forma com varios
+  //  HDs; a de HD unico esta comentada logo em seguida.
+  "destino": {
+    "tipo": "hd",               // "hd" = disco externo | "nuvem" = so rclone (sem HD)
+
+    // -- varios HDs externos --
+    "hds": ["HDEXTBKP-01", "HDEXTBKP-02", "HDEXTBKP-03"],  // ordem de preferencia
+    // "padrao_rotulo": "HDEXTBKP-*",   // alternativa: casa qualquer rotulo nesse padrao
+    "estrategia": "presente",   // COMO escolher o HD da rodada:
+                                //   "presente"    = usa o 1o da lista que estiver plugado (RECOMENDADO;
+                                //                   o cliente pluga qualquer um e o script se vira)
+                                //   "rodizio_dia" = HD1 na Seg, HD2 na Ter...; se o do dia nao estiver
+                                //                   plugado, usa o 1o conectado (fallback)
+                                //   "todos"       = espelha para TODOS os HDs conectados (redundancia;
+                                //                   gera 1 relatorio/e-mail/envio por HD)
+
+    // -- HD unico (modo classico) - use no lugar de "hds"/"padrao_rotulo" acima --
+    // "rotulo": "HDEXTBKP-01",
+
+    "montar_em": "/mnt/hd_bkp", // ponto de montagem do HD
+
+    "dias_rotacao": 7,          // quantas copias diarias o HD comporta:
+                                //   7 (padrao) = 1 pasta por dia da semana (Seg/Ter/Qua...)
+                                //   3, 2, 1    = rodizio de N pastas (dia_01..dia_0N). Use quando o
+                                //                HD nao tem espaco p/ 7 dias. Pode ser por copia tambem.
+                                //   OBS: ao REDUZIR depois de ja ter rodado, apague na mao as pastas
+                                //   antigas que sobrarem. E mantenha o --delete ligado (nao combine
+                                //   rodizio curto com "limpeza_dias").
+
+    "reter_logs_dias": 7        // quantos dias de log local manter
+  },
+
+  // ==== MONTAGENS (compartilhamentos de rede montados antes da copia) ======
+  "montagens": [
+    {
+      "tipo": "smb",                          // Windows / CIFS
+      "origem": "//192.168.0.10/Dados",       // UNC (o // faz parte do caminho)
+      "ponto": "/mnt/Dados",                  // onde monta localmente
+      "usuario": "administrador",
+      "senha": "senha-aqui",
+      "dominio": "EMPRESA",                   // opcional (workgroup/dominio)
+      "opcoes": "vers=3.0"                    // opcional: versao SMB (2.0 / 2.1 / 3.0) e outras flags cifs
+    },
+    {
+      "tipo": "nfs",                          // Linux / NAS via NFS
+      "origem": "192.168.0.20:/volume1/dados",// host:/caminho_exportado
+      "ponto": "/mnt/dados_nfs"               // NFS aqui nao usa usuario/senha
+    }
+  ],
+
+  // ==== COPIAS (um exemplo de CADA metodo) =================================
+  "copias": [
+
+    // 1) rsync LOCAL: origem ja montada localmente (o padrao do dia a dia)
+    {
+      "nome": "Setores",                      // vira <HD>/Backup_diario/<dia>/Setores
+      "metodo": "rsync",
+      "origem": "/mnt/Dados",
+      "excluir": ["*.tmp", "~$*", "Thumbs.db"], // texto unico ou lista de padroes a ignorar
+      "apagar_extras": true,                  // true = espelho (--delete). false = so acumula (nunca apaga)
+      "dias_rotacao": 3,                      // opcional: rodizio proprio desta copia (sobrepoe o do destino)
+      "limpeza_dias": 90,                     // opcional: modo acumulativo, so faz --delete a cada 90 dias
+      "inventario": true                      // false p/ pular o levantamento de estrutura desta origem
+    },
+
+    // 2) ssh-rsync: origem REMOTA via SSH -> HD local (puxa de um servidor Linux)
+    {
+      "nome": "ServidorLinux",
+      "metodo": "ssh-rsync",
+      "ssh_host": "192.168.0.30",
+      "ssh_user": "root",                     // padrao "root" se omitir
+      "ssh_senha": "senha-ssh",               // se omitir, usa CHAVE ssh (recomendado)
+      "porta": 22,                            // padrao 22
+      "origem": "/var/www"                    // caminho NO servidor remoto
+    },
+
+    // 3) rsync-ssh: origem LOCAL -> destino REMOTO via SSH (empurra p/ outro servidor)
+    {
+      "nome": "ReplicaRemota",
+      "metodo": "rsync-ssh",
+      "ssh_host": "192.168.0.40",
+      "ssh_user": "backup",
+      "ssh_senha": "senha-ssh",
+      "origem": "/mnt/Dados",
+      "destino": "/backups/empresa"           // OBRIGATORIO aqui: caminho NO servidor remoto
+    },
+
+    // 4) cp: copia simples (origem vira subpasta dentro do destino)
+    {
+      "nome": "CopiaSimples",
+      "metodo": "cp",
+      "origem": "/mnt/Dados"
+    },
+
+    // 5) rclone: envio p/ NUVEM (precisa do remote ja configurado: rclone config)
+    {
+      "nome": "NuvemGoogle",
+      "metodo": "rclone",
+      "origem": "/mnt/Dados",
+      "destino": "gdrive:BackupEmpresa"       // OBRIGATORIO: nome-do-remote:pasta
+    },
+
+    // 6) tar: RESERVADO - ainda nao executa (fica marcado como "a-validar" no relatorio)
+    {
+      "nome": "ExemploTar",
+      "metodo": "tar",
+      "origem": "/mnt/Dados"
+    }
+  ],
+
+  // ==== INVENTARIO (levantamento de estrutura da origem, p/ analise) =======
+  "inventario": {
+    "ativo": true,              // liga/desliga globalmente
+    "modificados_horas": 24,    // marca como "recentes" arquivos mudados nas ultimas X horas
+    "top_arquivos": 20,         // quantos MAIORES arquivos listar
+    "top_pastas": 20            // quantas MAIORES pastas listar
+  }
+}

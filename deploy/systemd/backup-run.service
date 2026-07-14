@@ -1,0 +1,14 @@
+# Backup pesado 1x/dia (doc 9): puxa a config fresca e roda o backup.py, que
+# reporta em /runs e /inventario. Disparado pelo backup-run.timer.
+[Unit]
+Description=Backup diario (agente -> backup.py)
+After=network-online.target
+Wants=network-online.target
+# Falhas ja sao reportadas pelo backup.py em /runs; adicione um OnFailure= aqui
+# se quiser tambem um alerta local (unit de e-mail/notificacao) por cima.
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=__INSTALL_DIR__
+ExecStart=/usr/bin/python3 __INSTALL_DIR__/agente.py backup

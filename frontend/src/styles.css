@@ -1,0 +1,21 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0a0d12;
+  color: #e6e9ef;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0a0d12; }
+::-webkit-scrollbar-thumb { background: #232a35; border-radius: 6px; }
+
+input, textarea, select, button { font-family: inherit; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: #2f6f43 !important; }
+
+/* estados de hover (o mockup usa style-hover; em React viram classes) */
+.navitem:hover { background: #161c26 !important; }
+.row:hover { background: #141922; }
+.btn:hover { filter: brightness(1.12); }
+.btn-outline:hover { border-color: #22c55e !important; }
+.link:hover { color: #e6e9ef !important; }
+.danger:hover { color: #ef4444 !important; }

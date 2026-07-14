@@ -1,0 +1,17 @@
+# Servico do agente (doc 9): laco de heartbeat (5-15 min) + pull de config/comandos.
+# So fala para fora (HTTPS de saida). __INSTALL_DIR__ e substituido pelo install.sh.
+[Unit]
+Description=Agente de backup em frota (heartbeat/pull)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=__INSTALL_DIR__
+ExecStart=/usr/bin/python3 __INSTALL_DIR__/agente.py loop
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+# segredos
+.env
+.env.*
+!.env.example
+!.env.prod.example
+recovery.key
+*.key
+backup/rclone.conf
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/

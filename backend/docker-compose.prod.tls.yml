@@ -1,0 +1,95 @@
+# Stack de PRODUCAO (doc 13). Use na VPS:
+#   cp .env.prod.example .env   # e preencha com segredos FORTES
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Diferencas p/ o dev: APP_ENV=prod (fail-closed em segredos padrao), Postgres NAO
+# exposto no host, API NAO exposta (so o nginx fala com ela), TLS no nginx via
+# Let's Encrypt/certbot, restart automatico.
+name: backup-fleet
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # sem `ports`: o banco nao fica exposto no host
+
+  api:
+    build: .
+    env_file: .env            # APP_ENV=prod, JWT_SECRET forte, RECOVERY_AGE_PUBKEY, etc.
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    # sem `ports`: so o nginx (rede interna) alcanca a API
+
+  web:
+    build: ../frontend
+    environment:
+      DOMAIN: ${DOMAIN}       # o image do nginx faz envsubst no template
+    volumes:
+      - ../frontend/nginx.prod.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - certbot-certs:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot
+      # instalador + arquivos do agente (curl | bash, doc 11). Troque o minisign.pub
+      # pelo real (a privada de assinatura fica no 1Password).
+      - ../deploy/install.sh:/usr/share/nginx/html/install.sh:ro
+      - ../agente.py:/usr/share/nginx/html/agent/agente.py:ro
+      - ../backup.py:/usr/share/nginx/html/agent/backup.py:ro
+      - ../deploy/minisign.pub:/usr/share/nginx/html/agent/minisign.pub:ro
+      - ../deploy/systemd:/usr/share/nginx/html/agent/systemd:ro
+      # Windows (curl|iex, PowerShell)
+      - ../deploy/windows/install.ps1:/usr/share/nginx/html/install.ps1:ro
+      - ../deploy/windows/agente.ps1:/usr/share/nginx/html/agent/agente.ps1:ro
+      - ../deploy/windows/backup.ps1:/usr/share/nginx/html/agent/backup.ps1:ro
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+
+  # Backup do backend (doc 13): pg_dump cifrado + envio offsite via rclone, agendado.
+  backup:
+    build: ./backup
+    env_file: .env            # BACKUP_AGE_RECIPIENT, RCLONE_REMOTE, RETENTION_KEEP, BACKUP_INTERVAL_SEC
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGDATABASE: ${POSTGRES_DB}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgbackups:/backups
+      - ./backup/rclone.conf:/root/.config/rclone/rclone.conf:ro   # credenciais do offsite
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Renovacao automatica dos certificados. A EMISSAO inicial e manual (ver README).
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-certs:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    entrypoint: >
+      sh -c 'trap exit TERM;
+      while :; do certbot renew --webroot -w /var/www/certbot --quiet;
+      sleep 12h & wait $${!}; done'
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  pgbackups:
+  certbot-certs:
+  certbot-webroot:
