@@ -47,7 +47,7 @@ export default function ClientDetail({ nome, onBack }) {
 
   return (
     <div>
-      <div onClick={onBack} className="link" style={{ display: 'inline-flex', gap: 6, fontSize: 12.5, color: C.muted, cursor: 'pointer', marginBottom: 16 }}>← Frota</div>
+      <div onClick={onBack} className="link" style={{ display: 'inline-flex', gap: 6, fontSize: 12.5, color: C.muted, cursor: 'pointer', marginBottom: 16 }}>← Clientes</div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

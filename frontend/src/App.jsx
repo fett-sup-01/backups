@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { api, getToken, setToken } from './api.js'
 import { Btn, C, ErroMsg, Input, mono } from './ui.jsx'
-import Fleet from './views/Fleet.jsx'
+import Clientes from './views/Clientes.jsx'
 import ClientDetail from './views/ClientDetail.jsx'
 import Runs from './views/Runs.jsx'
 import Commands from './views/Commands.jsx'
@@ -9,7 +9,7 @@ import Updates from './views/Updates.jsx'
 import Settings from './views/Settings.jsx'
 
 const NAV = [
-  { id: 'fleet', label: 'Frota' },
+  { id: 'clientes', label: 'Clientes' },
   { id: 'runs', label: 'Execuções' },
   { id: 'commands', label: 'Comandos' },
   { id: 'updates', label: 'Atualizações' },
@@ -62,7 +62,7 @@ function NavItem({ item, active, onClick }) {
 
 export default function App() {
   const [logado, setLogado] = useState(!!getToken())
-  const [view, setView] = useState('fleet')
+  const [view, setView] = useState('clientes')
   const [cliente, setCliente] = useState(null)
 
   if (!logado) return <Login onLogin={() => setLogado(true)} />
@@ -70,7 +70,7 @@ export default function App() {
   function go(v) { setCliente(null); setView(v) }
   function sair() { setToken(null); setLogado(false) }
 
-  const isClient = view === 'fleet' && cliente
+  const isClient = view === 'clientes' && cliente
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%', background: C.bg, color: C.fg, overflow: 'hidden' }}>
@@ -88,7 +88,7 @@ export default function App() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 }}>
           {NAV.map((n) => (
-            <NavItem key={n.id} item={n} active={view === n.id || (n.id === 'fleet' && view === 'fleet')} onClick={() => go(n.id)} />
+            <NavItem key={n.id} item={n} active={view === n.id} onClick={() => go(n.id)} />
           ))}
         </div>
 
@@ -103,7 +103,7 @@ export default function App() {
       {/* MAIN */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '28px 34px 60px' }}>
         {isClient ? <ClientDetail nome={cliente} onBack={() => setCliente(null)} />
-          : view === 'fleet' ? <Fleet onOpen={setCliente} />
+          : view === 'clientes' ? <Clientes onOpen={setCliente} />
           : view === 'runs' ? <Runs />
           : view === 'commands' ? <Commands />
           : view === 'updates' ? <Updates />

@@ -5,8 +5,8 @@
 #
 # name FIXO: o basename do diretorio ("backend") colide com o projeto Compose de
 # /Projetos/Tickets/backend. Fixamos o nome do projeto para isolar containers e
-# volumes desta stack (backup-fleet_*), independente do nome da pasta.
-name: backup-fleet
+# volumes desta stack (backups_*), independente do nome da pasta.
+name: backups
 
 services:
   db:

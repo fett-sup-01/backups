@@ -59,7 +59,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Backup Fleet Backend",
+    title="Backups Backend",
     version="0.1.0",
     lifespan=lifespan,
     # /docs, /redoc e /openapi.json ficam OFF em prod (nao expor o schema).

@@ -5,7 +5,7 @@
 # Diferencas p/ o dev: APP_ENV=prod (fail-closed em segredos padrao), Postgres NAO
 # exposto no host, API NAO exposta (so o nginx fala com ela), TLS no nginx via
 # Let's Encrypt/certbot, restart automatico.
-name: backup-fleet
+name: backups
 
 services:
   db:

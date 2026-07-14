@@ -44,7 +44,7 @@ function NovoCliente({ onClose, onCriado }) {
         <form onSubmit={criar}>
           <div style={{ fontSize: 12.5, color: C.muted, marginBottom: 10 }}>
             Cria o cliente e gera um token de enrollment de uso único (doc §11). Nome
-            obrigatório e único — é como você identifica a máquina na frota.
+            obrigatório e único — é como você identifica a máquina.
           </div>
           <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Sistema operacional</div>
           <OsPick value={plataforma} onChange={setPlataforma} />
@@ -80,7 +80,7 @@ function NovoCliente({ onClose, onCriado }) {
   )
 }
 
-export default function Fleet({ onOpen }) {
+export default function Clientes({ onOpen }) {
   const { data, erro, reload } = useFetch('/admin/clientes', { pollMs: 15000 })
   const [novo, setNovo] = useState(false)
   const clients = data || []
@@ -100,7 +100,7 @@ export default function Fleet({ onOpen }) {
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 22 }}>
         <div>
-          <div style={{ fontSize: 21, fontWeight: 700 }}>Visão geral da frota</div>
+          <div style={{ fontSize: 21, fontWeight: 700 }}>Visão geral dos clientes</div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>
             {clients.length} clientes monitorados · modelo pull, heartbeat a cada 5–15 min
           </div>
